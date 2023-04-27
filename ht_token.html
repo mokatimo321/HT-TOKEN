@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>HT-TOKEN</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script>
+
+			class ht {
+			    constructor() {
+			        this._dataLength = 0,
+			        this._bufferLength = 0,
+			        this._state = new Int32Array(4),
+			        this._buffer = new ArrayBuffer(68),
+			        this._buffer8 = new Uint8Array(this._buffer,0,68),
+			        this._buffer32 = new Uint32Array(this._buffer,0,17)
+			        this.start()
+			    }
+			    static hashStr(Ve, ee=!1) {
+			        return this.onePassHasher.start().appendStr(Ve).end(ee)
+			    }
+			    static hashAsciiStr(Ve, ee=!1) {
+			        return this.onePassHasher.start().appendAsciiStr(Ve).end(ee)
+			    }
+			    static _hex(Ve) {
+			        const ee = ht.hexChars
+			            , de = ht.hexOut;
+			        let Me, we, je, Zt;
+			        for (Zt = 0; Zt < 4; Zt += 1)
+			            for (we = 8 * Zt,
+			            Me = Ve[Zt],
+			            je = 0; je < 8; je += 2)
+			                de[we + 1 + je] = ee.charAt(15 & Me),
+			                Me >>>= 4,
+			                de[we + 0 + je] = ee.charAt(15 & Me),
+			                Me >>>= 4;
+			        return de.join("")
+			    }
+			    static _md5cycle(Ve, ee) {
+			        let de = Ve[0]
+			            , Me = Ve[1]
+			            , we = Ve[2]
+			            , je = Ve[3];
+			        de += (Me & we | ~Me & je) + ee[0] - 680876936 | 0,
+			        de = (de << 7 | de >>> 25) + Me | 0,
+			        je += (de & Me | ~de & we) + ee[1] - 389564586 | 0,
+			        je = (je << 12 | je >>> 20) + de | 0,
+			        we += (je & de | ~je & Me) + ee[2] + 606105819 | 0,
+			        we = (we << 17 | we >>> 15) + je | 0,
+			        Me += (we & je | ~we & de) + ee[3] - 1044525330 | 0,
+			        Me = (Me << 22 | Me >>> 10) + we | 0,
+			        de += (Me & we | ~Me & je) + ee[4] - 176418897 | 0,
+			        de = (de << 7 | de >>> 25) + Me | 0,
+			        je += (de & Me | ~de & we) + ee[5] + 1200080426 | 0,
+			        je = (je << 12 | je >>> 20) + de | 0,
+			        we += (je & de | ~je & Me) + ee[6] - 1473231341 | 0,
+			        we = (we << 17 | we >>> 15) + je | 0,
+			        Me += (we & je | ~we & de) + ee[7] - 45705983 | 0,
+			        Me = (Me << 22 | Me >>> 10) + we | 0,
+			        de += (Me & we | ~Me & je) + ee[8] + 1770035416 | 0,
+			        de = (de << 7 | de >>> 25) + Me | 0,
+			        je += (de & Me | ~de & we) + ee[9] - 1958414417 | 0,
+			        je = (je << 12 | je >>> 20) + de | 0,
+			        we += (je & de | ~je & Me) + ee[10] - 42063 | 0,
+			        we = (we << 17 | we >>> 15) + je | 0,
+			        Me += (we & je | ~we & de) + ee[11] - 1990404162 | 0,
+			        Me = (Me << 22 | Me >>> 10) + we | 0,
+			        de += (Me & we | ~Me & je) + ee[12] + 1804603682 | 0,
+			        de = (de << 7 | de >>> 25) + Me | 0,
+			        je += (de & Me | ~de & we) + ee[13] - 40341101 | 0,
+			        je = (je << 12 | je >>> 20) + de | 0,
+			        we += (je & de | ~je & Me) + ee[14] - 1502002290 | 0,
+			        we = (we << 17 | we >>> 15) + je | 0,
+			        Me += (we & je | ~we & de) + ee[15] + 1236535329 | 0,
+			        Me = (Me << 22 | Me >>> 10) + we | 0,
+			        de += (Me & je | we & ~je) + ee[1] - 165796510 | 0,
+			        de = (de << 5 | de >>> 27) + Me | 0,
+			        je += (de & we | Me & ~we) + ee[6] - 1069501632 | 0,
+			        je = (je << 9 | je >>> 23) + de | 0,
+			        we += (je & Me | de & ~Me) + ee[11] + 643717713 | 0,
+			        we = (we << 14 | we >>> 18) + je | 0,
+			        Me += (we & de | je & ~de) + ee[0] - 373897302 | 0,
+			        Me = (Me << 20 | Me >>> 12) + we | 0,
+			        de += (Me & je | we & ~je) + ee[5] - 701558691 | 0,
+			        de = (de << 5 | de >>> 27) + Me | 0,
+			        je += (de & we | Me & ~we) + ee[10] + 38016083 | 0,
+			        je = (je << 9 | je >>> 23) + de | 0,
+			        we += (je & Me | de & ~Me) + ee[15] - 660478335 | 0,
+			        we = (we << 14 | we >>> 18) + je | 0,
+			        Me += (we & de | je & ~de) + ee[4] - 405537848 | 0,
+			        Me = (Me << 20 | Me >>> 12) + we | 0,
+			        de += (Me & je | we & ~je) + ee[9] + 568446438 | 0,
+			        de = (de << 5 | de >>> 27) + Me | 0,
+			        je += (de & we | Me & ~we) + ee[14] - 1019803690 | 0,
+			        je = (je << 9 | je >>> 23) + de | 0,
+			        we += (je & Me | de & ~Me) + ee[3] - 187363961 | 0,
+			        we = (we << 14 | we >>> 18) + je | 0,
+			        Me += (we & de | je & ~de) + ee[8] + 1163531501 | 0,
+			        Me = (Me << 20 | Me >>> 12) + we | 0,
+			        de += (Me & je | we & ~je) + ee[13] - 1444681467 | 0,
+			        de = (de << 5 | de >>> 27) + Me | 0,
+			        je += (de & we | Me & ~we) + ee[2] - 51403784 | 0,
+			        je = (je << 9 | je >>> 23) + de | 0,
+			        we += (je & Me | de & ~Me) + ee[7] + 1735328473 | 0,
+			        we = (we << 14 | we >>> 18) + je | 0,
+			        Me += (we & de | je & ~de) + ee[12] - 1926607734 | 0,
+			        Me = (Me << 20 | Me >>> 12) + we | 0,
+			        de += (Me ^ we ^ je) + ee[5] - 378558 | 0,
+			        de = (de << 4 | de >>> 28) + Me | 0,
+			        je += (de ^ Me ^ we) + ee[8] - 2022574463 | 0,
+			        je = (je << 11 | je >>> 21) + de | 0,
+			        we += (je ^ de ^ Me) + ee[11] + 1839030562 | 0,
+			        we = (we << 16 | we >>> 16) + je | 0,
+			        Me += (we ^ je ^ de) + ee[14] - 35309556 | 0,
+			        Me = (Me << 23 | Me >>> 9) + we | 0,
+			        de += (Me ^ we ^ je) + ee[1] - 1530992060 | 0,
+			        de = (de << 4 | de >>> 28) + Me | 0,
+			        je += (de ^ Me ^ we) + ee[4] + 1272893353 | 0,
+			        je = (je << 11 | je >>> 21) + de | 0,
+			        we += (je ^ de ^ Me) + ee[7] - 155497632 | 0,
+			        we = (we << 16 | we >>> 16) + je | 0,
+			        Me += (we ^ je ^ de) + ee[10] - 1094730640 | 0,
+			        Me = (Me << 23 | Me >>> 9) + we | 0,
+			        de += (Me ^ we ^ je) + ee[13] + 681279174 | 0,
+			        de = (de << 4 | de >>> 28) + Me | 0,
+			        je += (de ^ Me ^ we) + ee[0] - 358537222 | 0,
+			        je = (je << 11 | je >>> 21) + de | 0,
+			        we += (je ^ de ^ Me) + ee[3] - 722521979 | 0,
+			        we = (we << 16 | we >>> 16) + je | 0,
+			        Me += (we ^ je ^ de) + ee[6] + 76029189 | 0,
+			        Me = (Me << 23 | Me >>> 9) + we | 0,
+			        de += (Me ^ we ^ je) + ee[9] - 640364487 | 0,
+			        de = (de << 4 | de >>> 28) + Me | 0,
+			        je += (de ^ Me ^ we) + ee[12] - 421815835 | 0,
+			        je = (je << 11 | je >>> 21) + de | 0,
+			        we += (je ^ de ^ Me) + ee[15] + 530742520 | 0,
+			        we = (we << 16 | we >>> 16) + je | 0,
+			        Me += (we ^ je ^ de) + ee[2] - 995338651 | 0,
+			        Me = (Me << 23 | Me >>> 9) + we | 0,
+			        de += (we ^ (Me | ~je)) + ee[0] - 198630844 | 0,
+			        de = (de << 6 | de >>> 26) + Me | 0,
+			        je += (Me ^ (de | ~we)) + ee[7] + 1126891415 | 0,
+			        je = (je << 10 | je >>> 22) + de | 0,
+			        we += (de ^ (je | ~Me)) + ee[14] - 1416354905 | 0,
+			        we = (we << 15 | we >>> 17) + je | 0,
+			        Me += (je ^ (we | ~de)) + ee[5] - 57434055 | 0,
+			        Me = (Me << 21 | Me >>> 11) + we | 0,
+			        de += (we ^ (Me | ~je)) + ee[12] + 1700485571 | 0,
+			        de = (de << 6 | de >>> 26) + Me | 0,
+			        je += (Me ^ (de | ~we)) + ee[3] - 1894986606 | 0,
+			        je = (je << 10 | je >>> 22) + de | 0,
+			        we += (de ^ (je | ~Me)) + ee[10] - 1051523 | 0,
+			        we = (we << 15 | we >>> 17) + je | 0,
+			        Me += (je ^ (we | ~de)) + ee[1] - 2054922799 | 0,
+			        Me = (Me << 21 | Me >>> 11) + we | 0,
+			        de += (we ^ (Me | ~je)) + ee[8] + 1873313359 | 0,
+			        de = (de << 6 | de >>> 26) + Me | 0,
+			        je += (Me ^ (de | ~we)) + ee[15] - 30611744 | 0,
+			        je = (je << 10 | je >>> 22) + de | 0,
+			        we += (de ^ (je | ~Me)) + ee[6] - 1560198380 | 0,
+			        we = (we << 15 | we >>> 17) + je | 0,
+			        Me += (je ^ (we | ~de)) + ee[13] + 1309151649 | 0,
+			        Me = (Me << 21 | Me >>> 11) + we | 0,
+			        de += (we ^ (Me | ~je)) + ee[4] - 145523070 | 0,
+			        de = (de << 6 | de >>> 26) + Me | 0,
+			        je += (Me ^ (de | ~we)) + ee[11] - 1120210379 | 0,
+			        je = (je << 10 | je >>> 22) + de | 0,
+			        we += (de ^ (je | ~Me)) + ee[2] + 718787259 | 0,
+			        we = (we << 15 | we >>> 17) + je | 0,
+			        Me += (je ^ (we | ~de)) + ee[9] - 343485551 | 0,
+			        Me = (Me << 21 | Me >>> 11) + we | 0,
+			        Ve[0] = de + Ve[0] | 0,
+			        Ve[1] = Me + Ve[1] | 0,
+			        Ve[2] = we + Ve[2] | 0,
+			        Ve[3] = je + Ve[3] | 0
+			    }
+			    start() {
+			        return this._dataLength = 0,
+			        this._bufferLength = 0,
+			        this._state.set(ht.stateIdentity),
+			        this
+			    }
+			    appendStr(Ve) {
+			        const ee = this._buffer8
+			            , de = this._buffer32;
+			        let we, je, Me = this._bufferLength;
+			        for (je = 0; je < Ve.length; je += 1) {
+			            if (we = Ve.charCodeAt(je),
+			            we < 128)
+			                ee[Me++] = we;
+			            else if (we < 2048)
+			                ee[Me++] = 192 + (we >>> 6),
+			                ee[Me++] = 63 & we | 128;
+			            else if (we < 55296 || we > 56319)
+			                ee[Me++] = 224 + (we >>> 12),
+			                ee[Me++] = we >>> 6 & 63 | 128,
+			                ee[Me++] = 63 & we | 128;
+			            else {
+			                if (we = 1024 * (we - 55296) + (Ve.charCodeAt(++je) - 56320) + 65536,
+			                we > 1114111)
+			                    throw new Error("Unicode standard supports code points up to U+10FFFF");
+			                ee[Me++] = 240 + (we >>> 18),
+			                ee[Me++] = we >>> 12 & 63 | 128,
+			                ee[Me++] = we >>> 6 & 63 | 128,
+			                ee[Me++] = 63 & we | 128
+			            }
+			            Me >= 64 && (this._dataLength += 64,
+			            ht._md5cycle(this._state, de),
+			            Me -= 64,
+			            de[0] = de[16])
+			        }
+			        return this._bufferLength = Me,
+			        this
+			    }
+			    setState(Ve) {
+			        const ee = Ve.buffer
+			            , de = Ve.state
+			            , Me = this._state;
+			        let we;
+			        for (this._dataLength = Ve.length,
+			        this._bufferLength = Ve.buflen,
+			        Me[0] = de[0],
+			        Me[1] = de[1],
+			        Me[2] = de[2],
+			        Me[3] = de[3],
+			        we = 0; we < ee.length; we += 1)
+			            this._buffer8[we] = ee.charCodeAt(we)
+			    }
+			    end(Ve=!1) {
+			        const ee = this._bufferLength
+			            , de = this._buffer8
+			            , Me = this._buffer32
+			            , we = 1 + (ee >> 2);
+			        this._dataLength += ee;
+			        const je = 8 * this._dataLength;
+			        if (de[ee] = 128,
+			        de[ee + 1] = de[ee + 2] = de[ee + 3] = 0,
+			        Me.set(ht.buffer32Identity.subarray(we), we),
+			        ee > 55 && (ht._md5cycle(this._state, Me),
+			        Me.set(ht.buffer32Identity)),
+			        je <= 4294967295)
+			            Me[14] = je;
+			        else {
+			            const Zt = je.toString(16).match(/(.*?)(.{0,8})$/);
+			            if (null === Zt)
+			                return;
+			            const nn = parseInt(Zt[2], 16)
+			                , qt = parseInt(Zt[1], 16) || 0;
+			            Me[14] = nn,
+			            Me[15] = qt
+			        }
+			        return ht._md5cycle(this._state, Me),
+			        Ve ? this._state : ht._hex(this._state)
+			    }
+			}
+			if (ht.stateIdentity = new Int32Array([1732584193, -271733879, -1732584194, 271733878]),
+			ht.buffer32Identity = new Int32Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+			ht.hexChars = "0123456789abcdef",
+			ht.hexOut = [],
+			ht.onePassHasher = new ht,
+			"5d41402abc4b2a76b9719d911017c592" !== ht.hashStr("hello"))
+			    throw new Error("Md5 self test failed.");
+			function Et(Ue, Ve) {
+			    const ee = Ce();
+			    return (Et = function(de, Me) {
+			        return ee[de -= 475]
+			    }
+			    )(Ue, Ve)
+			}
+			function Ze(Ue, Ve) {
+			    const ee = Et
+			        , de = function Ke(Ue) {
+			        return [+Ue[0], Ue[Et(478)](1)]
+			    }(Ve);
+			    return Oe(Ue.split("")[ee(481)]()[ee(482)]("")[ee(476)](de[1])[ee(476)](de[0]), de[0])
+			}
+			function Ce() {
+			    const Ue = ["314536mWwUMH", "reverse", "join", "847758naNOUI", "264295wNhFUt", "1698364VwLMCY", "63ZJfHBk", "2830DPRiuM", "54enUqei", "hashStr", "138958uRKJwC", "28545GebTqC", "concat", "1472940yecqmG", "slice", "1vyjSPd"];
+			    return (Ce = function() {
+			        return Ue
+			    }
+			    )()
+			}
+			function Oe(Ue, Ve) {
+			    const de = ht[Et(489)](Ue);
+			    return Ve > 1 ? Oe(de, Ve - 1) : de
+			}
+			!function(Ue, Ve) {
+			    const ee = Et
+			        , de = Ue();
+			    for (; ; )
+			        try {
+			            if (parseInt(ee(479)) / 1 * (-parseInt(ee(490)) / 2) + -parseInt(ee(483)) / 3 + -parseInt(ee(485)) / 4 + -parseInt(ee(484)) / 5 * (-parseInt(ee(488)) / 6) + parseInt(ee(486)) / 7 * (-parseInt(ee(480)) / 8) + parseInt(ee(477)) / 9 + -parseInt(ee(487)) / 10 * (-parseInt(ee(475)) / 11) == 243267)
+			                break;
+			            de.push(de.shift())
+			        } catch {
+			            de.push(de.shift())
+			        }
+			}(Ce);
+
+
+			function get_token() {
+
+				const urlParams = new URLSearchParams(window.location.search);
+				const access_token = urlParams.get('access_token');
+				const token_number = urlParams.get('token_number');
+				
+				// Reverse the name
+				const token = Ze(access_token, token_number);
+				console.log(token);
+				
+				// Set the HTML content to the reversed name
+				document.getElementById('token').innerHTML = token;
+
+
+			}
+	</script>
+</head>
+<body onload="get_token()">
+	<p>ht_token=<span id="token"></span></p>
+</body>
+</html>
